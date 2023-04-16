@@ -96,7 +96,11 @@ app.get('/add-note', async (req,res) => {
         body: "Body text goes here...",
       }
     ]);
-    res.json({"Data":"Added"})
+    const book = await Book.find();
+    res.json({"Data":"Added Successfully",
+    "status": "200",
+    "book": res.json(book)
+  })
   } catch (error) {
     console.log("err", + error);
   }
