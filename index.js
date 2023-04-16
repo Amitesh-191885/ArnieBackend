@@ -72,7 +72,7 @@ app.get('/', (req,res) => {
     res.send({ title: 'Books' });
 })
 
-app.get('/books', async (req,res)=> {
+app.get('/books', async (req, res)=> {
 
   const book = await Book.find();
 
