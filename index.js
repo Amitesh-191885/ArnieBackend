@@ -1,131 +1,107 @@
-// const app = require("./app");
-// const cloudinary = require("cloudinary");
-// const connectDatabase = require("./config/database");
-
-// // Handling Uncaught Exception
-// process.on("uncaughtException", (err) => {
-//   console.log(`Error: ${err.message}`);
-//   console.log(`Shutting down the server due to Uncaught Exception`);
-//   process.exit(1);
-// });
-
-// // Config
-// if (process.env.NODE_ENV !== "PRODUCTION") {
-//   require("dotenv").config({ path: "backend/config/config.env" });
-// }
-
-// // Connecting to database
-// connectDatabase();
-
-// cloudinary.config({
-//   cloud_name: process.env.CLOUDINARY_NAME,
-//   api_key: process.env.CLOUDINARY_API_KEY,
-//   api_secret: process.env.CLOUDINARY_API_SECRET,
-// });
-
-// const server = app.listen(process.env.PORT, () => {
-//   console.log(`Server is working on http://localhost:${process.env.PORT}`);
-// });
-
-// // Unhandled Promise Rejection
-// process.on("unhandledRejection", (err) => {
-//   console.log(`Error: ${err.message}`);
-//   console.log(`Shutting down the server due to Unhandled Promise Rejection`);
-
-//   server.close(() => {
-//     process.exit(1);
-//   });
-// });
-
-
-
-
-
-
-
-
-
-
 // second file
-
-require('dotenv').config();
-const express = require('express')
-const mongoose = require('mongoose')
-const Book = require("./models/book");
-
+import express from 'express'
+import Book from './models/book.js'
+import connectDB from './config/connectDb.js'
+import bodyParser from 'body-parser'
 const app = express()
-
-mongoose.set('strictQuery', false);
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGO_URI);
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-  } catch (error) {
-    console.log(error);
-    process.exit(1);
-  }
-}
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json())
 
 //Routes go here
-app.get('/', (req,res) => {
-    res.send({ title: 'Books' });
+app.get('/', (req, res) => {
+  res.send({ title: 'Books' });
 })
 
-app.get('/books', async (req, res)=> {
-
+app.get('/books', async (req, res) => {
   const book = await Book.find();
-
   if (book) {
     res.json(book)
   } else {
-    res.send("Something went wrong.");
+    res.send("Something went wrong in database.");
   }
-  
 });
 
-app.post('/add-note', async (req,res) => {
+// create a new book note
+app.post('/add-note', async (req, res) => {
   try {
-    await Book.insertMany([
-      {
-        title: "Sons Of Anarchy",
-        body: "Body text goes here...",
-      },
-      {
-        title: "Games of Thrones",
-        body: "Body text goes here...",
-      }
-    ]);
-    const book = await Book.find();
-    res.json({"Data":"Added Successfully",
-    "status": "200",
-    "book": res.json(book)
-  })
+    const book = await Book.create(req.body);
+    res.json({
+      "Data": "Added Successfully",
+      "status": "200",
+      "book": book
+    })
   } catch (error) {
     console.log("err", + error);
   }
 })
 
 
-app.delete("/delete-note/:id", async (req, res) => {
+app.delete("/delete-note", async (req, res) => {
   try {
-    const deletone = await Book.findByIdAndDelete({ _id: req.params.id });
-    if(deletone)  {
-      res.json({"Data":"Deleted Successfully",
-      "status": "200",
-    })
-    }{
-      res.json({"Data":"Already Deleted",
-      "status": "200",
-    })
+    const deletone = await Book.findByIdAndDelete({ _id: req.body.id });
+    if (deletone) {
+      res.json({
+        "Data": "Deleted Successfully",
+        "status": "200",
+      })
+    }
+    else {
+      res.json({
+        "Data": "Already Deleted",
+        "status": "200",
+      })
     }
   } catch (error) {
     console.log("err", + error);
   }
 });
 
+app.post("/update-note", async (req, res) => {
+  try {
+    // updtae the data for the id and return the updated data from request body
+    const id = req.body.id;
+    let product = Book.findById(id)
+    if (product) {
+      product = await Book.findByIdAndUpdate(id, req.body, {
+        new: true,
+        runValidators: true,
+        useFindAndModify: false,
+      })
+      res.json({
+        "Data": "Updated Successfully",
+        "status": "200",
+        "book": product
+      })
+    }
+    else {
+      res.json({
+        "Data": "Data Not Found",
+        "status": "404",
+      })
+    }
+
+  } catch (error) {
+    console.log("err", + error);
+  }
+});
+
+process.on('uncaughtException', (err) => {
+  console.log(`Error: ${err.message}`);
+  console.log(`Shutting down the server due to Uncaught Exception`);
+  process.exit(1)
+})
+
 //Connect to the database before listening
-connectDB().then(() => {
-    app.listen(process.env.PORT, () => {
-        console.log(`Server is working on http://localhost:${process.env.PORT}`);
-    })
+connectDB()
+const server = app.listen(process.env.PORT, () => {
+  console.log(`Server is working on http://localhost:${process.env.PORT}`);
+})
+
+//Handling Unhandled Promise Rejection
+process.on('unhandledRejection', (err) => {
+  console.log(`Error: ${err.message}`);
+  console.log(`Shutting down the server due to Unhandled Promise Rejection`);
+  server.close(() => {
+    process.exit(1)
+  })
 })
