@@ -54,7 +54,6 @@ const mongoose = require('mongoose')
 const Book = require("./models/book");
 
 const app = express()
-const PORT = process.env.PORT || 3000
 
 mongoose.set('strictQuery', false);
 const connectDB = async () => {
@@ -84,7 +83,7 @@ app.get('/books', async (req, res)=> {
   
 });
 
-app.get('/add-note', async (req,res) => {
+app.post('/add-note', async (req,res) => {
   try {
     await Book.insertMany([
       {
@@ -106,9 +105,27 @@ app.get('/add-note', async (req,res) => {
   }
 })
 
+
+app.delete("/delete-note/:id", async (req, res) => {
+  try {
+    const deletone = await Book.findByIdAndDelete({ _id: req.params.id });
+    if(deletone)  {
+      res.json({"Data":"Deleted Successfully",
+      "status": "200",
+    })
+    }{
+      res.json({"Data":"Already Deleted",
+      "status": "200",
+    })
+    }
+  } catch (error) {
+    console.log("err", + error);
+  }
+});
+
 //Connect to the database before listening
 connectDB().then(() => {
-    app.listen(PORT, () => {
-        console.log("listening for requests");
+    app.listen(process.env.PORT, () => {
+        console.log(`Server is working on http://localhost:${process.env.PORT}`);
     })
 })
