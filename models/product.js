@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const Schema = mongoose.Schema;
-const BookSchema = new Schema({
+const productSchema = new Schema({
   title: {
     type: String,
     required: true,
@@ -13,5 +13,5 @@ const BookSchema = new Schema({
 });
 
 // module.exports = mongoose.model('Book', BookSchema);
-const Book = mongoose.model('Book', BookSchema);
-export default Book;
+const Product = mongoose.model('Product', productSchema);
+export default Product;
